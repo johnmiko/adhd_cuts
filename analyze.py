@@ -4,7 +4,7 @@ How to automatically cut video, given the timestamps
 """
 import pandas as pd
 
-df = pd.read_csv('timestamps.csv', header=2)
+df = pd.read_csv('timestamps2.csv', header=2)
 # Fill Nans with start of next, or end of previous
 df.end = df.end.fillna(df.start.shift(-1))
 df.start = df.start.fillna(df.end.shift(1))
@@ -13,6 +13,7 @@ df.start = df.start.fillna(df.end.shift(1))
 def to_seconds(row, column):
     timestamp_raw = row[column]
     timestamp_parts_str = timestamp_raw.split(':')
+    print(timestamp_parts_str)
     timestamp_parts = [int(part) for part in timestamp_parts_str]
     # hour, minute, seconds,
     if len(timestamp_parts) == 3:
@@ -34,7 +35,8 @@ df["duration (s)"] = df["end_seconds"] - df["start_seconds"]
 df2 = df[df["needed"] == "yes"]
 group = df.groupby("needed")
 run_times = group.sum("duration (s)")
-run_times["duration (m)"] = run_times["duration (s)"] / 60
+run_times["duration (m)"] = (run_times["duration (s)"] / 60).round(0)
+print(run_times)
 """
 run times
 add up run times based on needed
