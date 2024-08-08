@@ -11,7 +11,14 @@ from moviepy.video.io.VideoFileClip import VideoFileClip
 from analyze import to_seconds, should_include_clip
 from inputs import PROJ_DIR, ORIGINAL_FILE
 
-df_in = pd.read_csv(PROJ_DIR + 'timestamps.csv', header=2)
+# -i "Digimon Adventure 02 Ep01-1.m4v" -vf select="eq(pict_type\, PICT_TYPE_I)" -vsync 2 -frame_pts 1 -r 1000 "output.mp4-%d.jpg"
+# Can run directly with ffmpeg command line to get key frame timestamps
+# ffprobe -select_streams v -show_frames -show_entries frame=pkt_pts_time,pict_type -of csv=print_section=0 "Digimon Adventure 02 Ep01-1.m4v" | findstr ",I" > keyframes.txt
+# ffprobe -loglevel error -select_streams v:0 -show_entries packet=pts_time,flags -of csv=print_section=0  | awk -F',' '/K/ {print $1}'
+# ffprobe -loglevel error -select_streams v:0 -show_entries packet=pts_time,flags -of csv=print_section=0 "Digimon
+# Adventure 02 Ep01-1.m4v"
+
+df_in = pd.read_csv(PROJ_DIR + 'Digimon 02 - 01 timestamps - timestamps (1).csv', header=2)
 # remove rows where start and end time are not filled in. In case of user error
 df = df_in[~df_in[["start", "end"]].isna().all(axis=1)]
 # Fill Nans timestamps with start of next, or end of previous
@@ -29,9 +36,9 @@ run times
 add up run times based on needed
 """
 total = len(df)
-print('creating clips')
 clips = []
 if "create_clips" == "nope":
+    print('creating clips')
     # TODO: make clips directory if it doesn't exist
     # Think I don't need this whole thing yeah?
     for i, row in df.iterrows():
@@ -62,10 +69,10 @@ if "combine_clips":
         pct = round(i / total * 100, 0)
         print(f'{i} / {total} ({pct}%)')
         if should_include_clip(row):
-            filename = f'{PROJ_DIR}clips/{row["start_seconds"]}_{row["end_seconds"]} - ADHD Cut - funny.mp4'
             clip = VideoFileClip(ORIGINAL_FILE).subclip(row["start_seconds"],
                                                         row["end_seconds"])
             clips.append(clip)
     result = concatenate_videoclips(clips)
-    result.write_videofile(f'{ORIGINAL_FILE}.mp4')
+    filename = f'{ORIGINAL_FILE} - ADHD Cut - funny.mp4'
+    result.write_videofile(filename)
     print('finished combining clips')
